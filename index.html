@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liga de Pares — Registro de Retos</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #f5f2eb;
+    --accent: #7c3aed;
+    --accent2: #f59e0b;
+    --muted: #6b7280;
+    --border: #d1cfc8;
+    --success: #059669;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; padding: 0 0 80px; }
+
+  .header { background: var(--ink); padding: 32px 24px 28px; position: relative; overflow: hidden; }
+  .header::before { content: ''; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; border-radius: 50%; background: var(--accent); opacity: 0.15; }
+  .header::after { content: ''; position: absolute; bottom: -60px; left: 20%; width: 220px; height: 220px; border-radius: 50%; background: var(--accent2); opacity: 0.08; }
+  .header-tag { display: inline-block; background: var(--accent); color: white; font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 4px 12px; border-radius: 100px; margin-bottom: 12px; }
+  .header h1 { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: white; line-height: 1.1; position: relative; z-index: 1; }
+  .header p { color: rgba(255,255,255,0.65); margin-top: 8px; font-size: 14px; line-height: 1.5; position: relative; z-index: 1; }
+
+  .progress-wrap { background: white; border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
+  .progress-label { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .progress-bar { flex: 1; height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 100px; transition: width 0.4s cubic-bezier(.4,0,.2,1); }
+  .progress-pct { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--accent); min-width: 36px; text-align: right; }
+
+  .content { padding: 24px 20px; max-width: 600px; margin: 0 auto; }
+  .step { display: none; animation: fadeIn 0.3s ease; }
+  .step.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .section-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .field { margin-bottom: 22px; }
+  .field label { display: block; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--ink); }
+  .field label .req { color: var(--accent); margin-left: 2px; }
+  .field select, .field input[type="date"] { width: 100%; padding: 13px 16px; border: 2px solid var(--border); border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--ink); background: white; appearance: none; -webkit-appearance: none; transition: border-color 0.2s, box-shadow 0.2s; outline: none; }
+  .field select:focus, .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
+  .select-wrap { position: relative; }
+  .select-wrap::after { content: '▾'; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; font-size: 14px; }
+
+  .liga-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
+  .liga-card { border: 2px solid var(--border); border-radius: 14px; padding: 16px 14px; cursor: pointer; transition: all 0.2s; background: white; text-align: center; position: relative; overflow: hidden; }
+  .liga-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124,58,237,0.12); }
+  .liga-card.selected { border-color: var(--accent); background: rgba(124,58,237,0.05); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+  .liga-card .liga-icon { font-size: 28px; margin-bottom: 6px; }
+  .liga-card .liga-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+  .liga-card .liga-hint { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.3; }
+  .liga-card .check { position: absolute; top: 8px; right: 8px; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; display: none; align-items: center; justify-content: center; color: white; font-size: 10px; }
+  .liga-card.selected .check { display: flex; }
+
+  .reto-item { border: 2px solid var(--border); border-radius: 14px; margin-bottom: 10px; background: white; cursor: pointer; transition: all 0.2s; overflow: hidden; }
+  .reto-item:hover { border-color: var(--accent); }
+  .reto-item.selected { border-color: var(--accent); background: rgba(124,58,237,0.03); }
+  .reto-header { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; }
+  .reto-check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: white; }
+  .reto-item.selected .reto-check { background: var(--accent); border-color: var(--accent); color: white; font-size: 12px; }
+  .reto-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--ink); flex: 1; line-height: 1.4; }
+  .reto-evidencia { display: none; padding: 10px 16px 14px 50px; font-size: 12px; color: var(--muted); line-height: 1.5; border-top: 1px solid var(--border); }
+  .reto-item.selected .reto-evidencia { display: block; }
+  .reto-evidencia strong { color: var(--accent); }
+
+  .boost-grid { display: flex; flex-direction: column; gap: 10px; }
+  .boost-card { border: 2px solid var(--border); border-radius: 12px; padding: 14px 16px; cursor: pointer; background: white; display: flex; align-items: flex-start; gap: 12px; transition: all 0.2s; }
+  .boost-card:hover { border-color: var(--accent2); }
+  .boost-card.selected { border-color: var(--accent2); background: rgba(245,158,11,0.05); }
+  .boost-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .boost-card.selected .boost-radio { border-color: var(--accent2); }
+  .boost-card.selected .boost-radio::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--accent2); }
+  .boost-label { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.4; }
+  .boost-note { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  .confirm-toggle { border: 2px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; background: white; transition: all 0.2s; }
+  .confirm-toggle.active { border-color: var(--success); background: rgba(5,150,105,0.04); }
+  .toggle-box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 12px; }
+  .confirm-toggle.active .toggle-box { background: var(--success); border-color: var(--success); color: white; }
+  .confirm-text { font-size: 14px; color: var(--ink); line-height: 1.4; }
+
+  .nav-bar { display: flex; gap: 12px; margin-top: 32px; }
+  .btn-back { flex: 0 0 auto; padding: 14px 20px; border: 2px solid var(--border); border-radius: 12px; background: white; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+  .btn-back:hover { border-color: var(--ink); color: var(--ink); }
+  .btn-next { flex: 1; padding: 14px 20px; background: var(--accent); border: none; border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; color: white; cursor: pointer; transition: all 0.2s; }
+  .btn-next:hover { background: #6d28d9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(124,58,237,0.3); }
+  .btn-submit { flex: 1; padding: 16px 20px; background: linear-gradient(135deg, var(--accent), #6d28d9); border: none; border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: white; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 20px rgba(124,58,237,0.3); }
+  .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(124,58,237,0.4); }
+
+  .summary-card { background: white; border: 2px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .summary-row { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-key { color: var(--muted); font-size: 12px; font-family: 'Syne', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; flex: 0 0 110px; padding-top: 1px; }
+  .summary-val { font-weight: 500; color: var(--ink); flex: 1; line-height: 1.4; }
+
+  .success-wrap { display: none; text-align: center; padding: 40px 20px; animation: fadeIn 0.4s ease; }
+  .success-wrap.visible { display: block; }
+  .success-icon { width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 50%; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; font-size: 36px; box-shadow: 0 8px 32px rgba(124,58,237,0.3); }
+  .success-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; color: var(--ink); margin-bottom: 10px; }
+  .success-sub { color: var(--muted); font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
+  .btn-nuevo { display: inline-block; padding: 14px 32px; background: var(--accent); color: white; border: none; border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+  .btn-nuevo:hover { background: #6d28d9; transform: translateY(-2px); }
+
+  .info-note { background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.2); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: var(--ink); margin-bottom: 16px; line-height: 1.5; }
+  .field-error { font-size: 12px; color: #dc2626; margin-top: 6px; display: none; }
+  .field-error.visible { display: block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-tag">Programa de Pares Guía — Becas BCP</div>
+  <h1>Liga de Pares 🏆</h1>
+  <p>Mediante este formulario registrarás el cumplimiento de retos. Puedes hacerlo todas las veces que quieras.</p>
+</div>
+
+<div class="progress-wrap">
+  <span class="progress-label" id="stepLabel">Paso 1 de 4</span>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:25%"></div></div>
+  <span class="progress-pct" id="progressPct">25%</span>
+</div>
+
+<div class="content">
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <div class="section-title">Identidad del par</div>
+    <div class="field">
+      <label>Par guía <span class="req">*</span></label>
+      <div class="select-wrap">
+        <select id="parGuia">
+          <option value="">Selecciona tu nombre...</option>
+          <option>Abigaíl Egúsquiza Torres</option>
+          <option>Agustín Valentino Huerta Minchola</option>
+          <option>Alonso Suraj Oli Zárate</option>
+          <option>Ana Romina Rios Canales</option>
+          <option>Andrea Megan Valenzuela Miranda</option>
+          <option>Angelina Nicole Molero Rojas</option>
+          <option>Ashlee Anahí Garavito Povis</option>
+          <option>Brian Jethro Trujillo Fernández</option>
+          <option>Carlos Jesús Sebastián Flores Yacila</option>
+          <option>César Augusto Cavero Pujay</option>
+          <option>Clara Jimena Palma Dolmos</option>
+          <option>Cristian Fabricio Condori Espinal</option>
+          <option>Daniela Fabiana Ochoa Chumbiauca</option>
+          <option>David Vicente Quilla Pichilingue</option>
+          <option>Dhorian Renzo Meneses Moreno</option>
+          <option>Diana Isabel Santuyo Luque</option>
+          <option>Edward Joel Cruz Ocas</option>
+          <option>Estefhany Isabel Urribari Añanca</option>
+          <option>Fabrizzio Alexander De la Cuba Palacios</option>
+          <option>Gimena Pastor Herhuay</option>
+          <option>Ian Antonio Galarza Gutiérrez</option>
+          <option>Ichiro Damián Kuroiwa Farías</option>
+          <option>José María Silvera Pastor</option>
+          <option>Julio Alonso Cirilo Mel</option>
+          <option>Julieta María Villa Rodríguez</option>
+          <option>Luis Miguel Iparraguirre Asparrín</option>
+          <option>Marcelo Raúl Francisco Rojas</option>
+          <option>Marco Enrique Pérez Rotta</option>
+          <option>Maricielo Moreno Porras</option>
+          <option>Martín Jesús Bonilla Sarmiento</option>
+          <option>Mauro Fabrizzio Andrés Santibáñez Ruíz</option>
+          <option>Miguel Ángel Sánchez Hurtado</option>
+          <option>Patricio Alonso Olivera Alvarado</option>
+          <option>Piero Alejandro Soto Puppi</option>
+          <option>Regina Sánchez Núñez</option>
+          <option>Ricardo Fabrizio Torres Facundo</option>
+          <option>Rodrigo Sebastián Rau De la Cruz</option>
+          <option>Ronaldo Vía Taipe</option>
+          <option>Ryan Maverick Avalos Bacilio</option>
+          <option>Sabrina Rojas Bayona</option>
+          <option>Sandra Sofía Alvarez Lovera</option>
+          <option>Tamara Miranda Vega Albarracín</option>
+          <option>Valeria Jesús Reyes Carranza</option>
+          <option>Ximena Nicole Mory Flores</option>
+        </select>
+      </div>
+      <div class="field-error" id="err-parGuia">Por favor selecciona el par guía.</div>
+    </div>
+
+    <div class="field">
+      <label>Par ingresante <span class="req">*</span></label>
+      <div class="select-wrap">
+        <select id="parIngresante">
+          <option value="">Selecciona al ingresante...</option>
+          <option>Alexander David Quintana Cosme</option>
+          <option>Anderson Quispe Amao</option>
+          <option>Andrea Camila Milla Cardenas</option>
+          <option>Camila Fernanda Pachas Gomez</option>
+          <option>Carlos Arturo Córdova Napa</option>
+          <option>Daniela Camila Sarayasi Jiménez</option>
+          <option>Danuska Daryely Vasquez Castillo</option>
+          <option>Danna Catalina Cedamano Echeverri</option>
+          <option>Enzo Javier Quijandria Aponte</option>
+          <option>Francisco Leonel Arias Bernardo</option>
+          <option>Gianela Liz Carmen Churampi Quispe</option>
+          <option>Gianfranco Ernesto Canales Perleche</option>
+          <option>Graciamaria Jimena Bracamonte Hurtado</option>
+          <option>Héctor Miguel Vásquez Arteaga</option>
+          <option>Herny Jael Vargas Sarmiento</option>
+          <option>Hilmer David Caso Torres</option>
+          <option>Isila Fabiana Lopez Merino</option>
+          <option>Italo Nicolas Ramirez Del Águila</option>
+          <option>Jean Pierre Aymar Dueñas Mamani</option>
+          <option>Jeremy Renzo Bustamante Delgado</option>
+          <option>Jesus Rodrigo Arce</option>
+          <option>Joaquin Leonardo Terrazas Paliza</option>
+          <option>José Guitaldo Palomares Tucto</option>
+          <option>Juan De Dios Calle Vega</option>
+          <option>Juan José Francisco Carbonel Gomero</option>
+          <option>Leddy Flores Copa</option>
+          <option>Leonardo Raúl Cáceres Vera</option>
+          <option>Lizedith Monteza Aguilar</option>
+          <option>Lorena Tatiana Vera Cárdenas</option>
+          <option>Marco Antonio Patron Morales</option>
+          <option>Mariana Sayuri Silva Carbajal</option>
+          <option>Mathias Jeremy Vilca Tarazona</option>
+          <option>Mathias Yeray Rodríguez Abanto</option>
+          <option>Matias Jesus Valerin Flores</option>
+          <option>Matias Santiago Romero Montalvan</option>
+          <option>Piero Gianfranco Urbina Pasapera</option>
+          <option>Rafaella Romero Decena</option>
+          <option>Renato Anibal Minchola Quispe</option>
+          <option>Samuel Sebastián Vértiz Herrera</option>
+          <option>Santiago Mathias Gomez Tipiani</option>
+          <option>Sebastián Alonso Mori Lozano</option>
+          <option>Sebastian Alexander Balarezo Chihuan</option>
+          <option>Sergio Emilio Ochicua Lopez</option>
+          <option>Silvanna Gail Raquel Huamanchumo Lopez</option>
+          <option>Thiago Albeiro Román Carreño</option>
+          <option>Valeria Jimena Varillas Cordova</option>
+          <option>Victor Junior Cuellar Vasquez</option>
+          <option>Vicente Vasco Choque Castillo</option>
+          <option>Xavier Solis Fernández</option>
+          <option>Ximena Villalobos Paz De Noboa</option>
+          <option>Xiomara Abigail Ramos Rojas</option>
+          <option>Yamil Matias Manrique Calderon</option>
+          <option>Yasuri Namiley Agreda Vega</option>
+          <option>Yazid Mariel Vasquez Orozco</option>
+        </select>
+      </div>
+      <div class="field-error" id="err-parIngresante">Por favor selecciona al par ingresante.</div>
+    </div>
+
+    <div class="field">
+      <label>Liga <span class="req">*</span></label>
+      <div class="liga-grid">
+        <div class="liga-card" id="ligaCard-bibliotecario" onclick="selectLiga('bibliotecario')">
+          <div class="liga-icon">📚</div>
+          <div class="liga-name">Par Bibliotecario</div>
+          <div class="liga-hint">Lecturas y conocimiento compartido</div>
+          <div class="check">✓</div>
+        </div>
+        <div class="liga-card" id="ligaCard-complice" onclick="selectLiga('complice')">
+          <div class="liga-icon">🤝</div>
+          <div class="liga-name">Par Cómplice</div>
+          <div class="liga-hint">Conexión personal y experiencias</div>
+          <div class="check">✓</div>
+        </div>
+        <div class="liga-card" id="ligaCard-zen" onclick="selectLiga('zen')">
+          <div class="liga-icon">🧘</div>
+          <div class="liga-name">Par Modo Zen</div>
+          <div class="liga-hint">Bienestar, calma y equilibrio</div>
+          <div class="check">✓</div>
+        </div>
+        <div class="liga-card" id="ligaCard-explorador" onclick="selectLiga('explorador')">
+          <div class="liga-icon">🗺️</div>
+          <div class="liga-name">Par Explorador</div>
+          <div class="liga-hint">Descubrir campus y vida universitaria</div>
+          <div class="check">✓</div>
+        </div>
+      </div>
+      <div class="field-error" id="err-liga">Por favor selecciona una liga.</div>
+    </div>
+
+    <div class="nav-bar">
+      <button class="btn-next" onclick="goNext(1)">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <div class="section-title" id="retosTitle">Retos de la liga</div>
+    <div class="info-note">Selecciona el reto que completaron. Toca para ver la evidencia requerida.</div>
+    <div id="retosList"></div>
+    <div class="field-error" id="err-reto" style="margin-bottom:12px;">Por favor selecciona un reto.</div>
+    <div class="nav-bar">
+      <button class="btn-back" onclick="goBack(2)">← Atrás</button>
+      <button class="btn-next" onclick="goNext(2)">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step3">
+    <div class="section-title">Detalles del cumplimiento</div>
+    <div class="field">
+      <label>Fecha en que cumplieron el reto <span class="req">*</span></label>
+      <input type="date" id="fechaReto" />
+      <div class="field-error" id="err-fecha">Por favor indica la fecha.</div>
+    </div>
+    <div class="field">
+      <label>¿Subiste la evidencia a tu Drive? <span class="req">*</span></label>
+      <div class="confirm-toggle" id="driveToggle" onclick="toggleDrive()">
+        <div class="toggle-box">✓</div>
+        <div class="confirm-text">Sí, confirmó que subió la evidencia a Drive</div>
+      </div>
+      <div class="field-error" id="err-drive">Confirma que subiste la evidencia.</div>
+    </div>
+    <div class="field">
+      <label>Boost <span class="req">*</span></label>
+      <div class="boost-grid">
+        <div class="boost-card" id="boostCard-ninguno" onclick="selectBoost('ninguno')">
+          <div class="boost-radio"></div>
+          <div><div class="boost-label">Ninguno</div></div>
+        </div>
+        <div class="boost-card" id="boostCard-dupla" onclick="selectBoost('dupla')">
+          <div class="boost-radio"></div>
+          <div>
+            <div class="boost-label">Lo realizamos con otra dupla (par guía + par ingresante)</div>
+            <div class="boost-note">*Se verificará en la evidencia</div>
+          </div>
+        </div>
+        <div class="boost-card" id="boostCard-semana" onclick="selectBoost('semana')">
+          <div class="boost-radio"></div>
+          <div>
+            <div class="boost-label">Lo realizamos en una semana de bonificación de puntos</div>
+            <div class="boost-note">*Se verificará según la fecha</div>
+          </div>
+        </div>
+      </div>
+      <div class="field-error" id="err-boost">Por favor selecciona una opción.</div>
+    </div>
+    <div class="nav-bar">
+      <button class="btn-back" onclick="goBack(3)">← Atrás</button>
+      <button class="btn-next" onclick="goNext(3)">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step" id="step4">
+    <div class="section-title">Confirmar registro</div>
+    <div class="info-note">Revisa el resumen antes de enviar. Una vez enviado quedará registrado.</div>
+    <div class="summary-card" id="summaryCard"></div>
+    <div class="nav-bar">
+      <button class="btn-back" onclick="goBack(4)">← Editar</button>
+      <button class="btn-submit" onclick="submitForm()">Registrar reto ✓</button>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-wrap" id="successWrap">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">¡Reto registrado!</div>
+    <p class="success-sub">El cumplimiento quedó guardado correctamente.<br>¡Sigan sumando puntos para la liga!</p>
+    <button class="btn-nuevo" onclick="resetForm()">Registrar otro reto</button>
+  </div>
+
+</div>
+
+<script>
+const LIGAS = {
+  bibliotecario: {
+    name: "Par Bibliotecario", icon: "📚",
+    retos: [
+      { titulo: "Recomendar y comentar libros o artículos", evidencia: "Foto de la conversación o captura de la recomendación enviada + breve comentario de ambos." },
+      { titulo: "Visitar juntos la biblioteca o sala de estudio", evidencia: "Selfie grupal en la biblioteca o sala de lectura." },
+      { titulo: "Compartir recursos académicos útiles", evidencia: "Captura del recurso compartido (link, PDF, apunte) enviado al ingresante." },
+      { titulo: "Hacer una sesión de estudio conjunta", evidencia: "Foto del momento de estudio o captura de videollamada de estudio." },
+      { titulo: "Explorar bases de datos o plataformas académicas juntos", evidencia: "Captura de pantalla de la exploración en alguna plataforma." },
+    ]
+  },
+  complice: {
+    name: "Par Cómplice", icon: "🤝",
+    retos: [
+      { titulo: "Comer juntos en campus (comedor, cafetería, picnic, etc.)", evidencia: "Foto del momento (selfie grupal)." },
+      { titulo: "Hacer un 'mini slam' o presentación creativa virtual", evidencia: "Link al video o archivo compartido." },
+      { titulo: "Compartir una playlist colaborativa y escucharla juntos", evidencia: "Link a la playlist + captura que muestre que la escucharon." },
+      { titulo: "Organizar/participar en un juego tipo 'preguntas rápidas'", evidencia: "Foto o video corto (≤30s)." },
+      { titulo: "Ir juntos a un evento estudiantil (charla, feria)", evidencia: "Foto en el evento + nombre del evento." },
+      { titulo: "Intercambiar recomendaciones culturales (serie, libro, podcast)", evidencia: "Foto + breve comentario." },
+      { titulo: "Crear un meme universitario juntos", evidencia: "Captura del meme creado." },
+      { titulo: "Hacer una 'lista de cosas que queremos probar este semestre'", evidencia: "Foto de la lista." },
+    ]
+  },
+  zen: {
+    name: "Par Modo Zen", icon: "🧘",
+    retos: [
+      { titulo: "Compartir una rutina de bienestar o técnica de relajación", evidencia: "Video corto o foto mostrando la actividad." },
+      { titulo: "Hacer una caminata o actividad al aire libre juntos", evidencia: "Foto durante o después de la actividad." },
+      { titulo: "Hablar sobre manejo del estrés y apoyo emocional", evidencia: "Selfie post-conversación o nota escrita de compromisos." },
+      { titulo: "Practicar mindfulness o meditación juntos", evidencia: "Foto o video corto de la sesión." },
+      { titulo: "Preparar o compartir una comida/snack saludable juntos", evidencia: "Foto del momento o del plato preparado." },
+    ]
+  },
+  explorador: {
+    name: "Par Explorador", icon: "🗺️",
+    retos: [
+      { titulo: "Recorrer juntos un espacio del campus que el ingresante no conocía", evidencia: "Foto en el lugar + nombre del espacio." },
+      { titulo: "Identificar servicios o recursos de la universidad útiles para el ingresante", evidencia: "Captura de la información compartida o foto en el servicio." },
+      { titulo: "Asistir juntos a una actividad extracurricular o club", evidencia: "Foto o flyer del evento + foto de ambos asistiendo." },
+      { titulo: "Realizar una 'aventura de campus': encontrar los 3 mejores rincones", evidencia: "Collage o álbum de fotos de los 3 lugares." },
+      { titulo: "Explorar el entorno del campus (tiendas, parques, transporte)", evidencia: "Foto del recorrido juntos." },
+    ]
+  }
+};
+
+const BOOST_LABELS = {
+  ninguno: "Ninguno",
+  dupla: "Lo realizamos con otra dupla (par guía + par ingresante)",
+  semana: "Lo realizamos en una semana de bonificación de puntos"
+};
+
+let state = { parGuia:'', parIngresante:'', liga:'', retoIdx: null, retoTitulo:'', fecha:'', driveConfirm:false, boost:'' };
+
+function selectLiga(id) {
+  state.liga = id;
+  state.retoIdx = null;
+  state.retoTitulo = '';
+  document.querySelectorAll('.liga-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById('ligaCard-' + id).classList.add('selected');
+  document.getElementById('err-liga').classList.remove('visible');
+
+  const liga = LIGAS[id];
+  document.getElementById('retosTitle').textContent = 'Retos — ' + liga.name + ' ' + liga.icon;
+  const container = document.getElementById('retosList');
+  container.innerHTML = '';
+  liga.retos.forEach(function(r, i) {
+    var div = document.createElement('div');
+    div.className = 'reto-item';
+    div.id = 'reto-' + i;
+    div.innerHTML =
+      '<div class="reto-header">' +
+        '<div class="reto-check">✓</div>' +
+        '<div class="reto-title">' + r.titulo + '</div>' +
+      '</div>' +
+      '<div class="reto-evidencia"><strong>Evidencia requerida:</strong> ' + r.evidencia + '</div>';
+    div.onclick = function() { selectReto(i); };
+    container.appendChild(div);
+  });
+}
+
+function selectReto(idx) {
+  state.retoIdx = idx;
+  state.retoTitulo = LIGAS[state.liga].retos[idx].titulo;
+  document.querySelectorAll('.reto-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById('reto-' + idx).classList.add('selected');
+  document.getElementById('err-reto').classList.remove('visible');
+}
+
+function selectBoost(id) {
+  state.boost = id;
+  document.querySelectorAll('.boost-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById('boostCard-' + id).classList.add('selected');
+  document.getElementById('err-boost').classList.remove('visible');
+}
+
+function toggleDrive() {
+  state.driveConfirm = !state.driveConfirm;
+  var toggle = document.getElementById('driveToggle');
+  if (state.driveConfirm) toggle.classList.add('active');
+  else toggle.classList.remove('active');
+  document.getElementById('err-drive').classList.remove('visible');
+}
+
+function goNext(fromStep) {
+  if (!validateStep(fromStep)) return;
+  showStep(fromStep + 1);
+  if (fromStep + 1 === 4) buildSummary();
+}
+
+function goBack(fromStep) { showStep(fromStep - 1); }
+
+function showStep(n) {
+  document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  var pct = Math.round((n / 4) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('stepLabel').textContent = 'Paso ' + n + ' de 4';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function validateStep(step) {
+  var ok = true;
+  if (step === 1) {
+    state.parGuia = document.getElementById('parGuia').value;
+    state.parIngresante = document.getElementById('parIngresante').value;
+    if (!state.parGuia) { showErr('err-parGuia'); ok = false; }
+    if (!state.parIngresante) { showErr('err-parIngresante'); ok = false; }
+    if (!state.liga) { showErr('err-liga'); ok = false; }
+  }
+  if (step === 2 && state.retoIdx === null) { showErr('err-reto'); ok = false; }
+  if (step === 3) {
+    state.fecha = document.getElementById('fechaReto').value;
+    if (!state.fecha) { showErr('err-fecha'); ok = false; }
+    if (!state.driveConfirm) { showErr('err-drive'); ok = false; }
+    if (!state.boost) { showErr('err-boost'); ok = false; }
+  }
+  return ok;
+}
+
+function showErr(id) { document.getElementById(id).classList.add('visible'); }
+
+function buildSummary() {
+  var liga = LIGAS[state.liga];
+  var fechaFmt = state.fecha ? new Date(state.fecha + 'T12:00:00').toLocaleDateString('es-PE', { day:'numeric', month:'long', year:'numeric' }) : '';
+  document.getElementById('summaryCard').innerHTML =
+    row('Par Guía', state.parGuia) +
+    row('Ingresante', state.parIngresante) +
+    row('Liga', liga.icon + ' ' + liga.name) +
+    row('Reto', state.retoTitulo) +
+    row('Fecha', fechaFmt) +
+    row('Evidencia', '✅ Subida a Drive') +
+    row('Boost', BOOST_LABELS[state.boost]);
+}
+
+function row(key, val) {
+  return '<div class="summary-row"><span class="summary-key">' + key + '</span><span class="summary-val">' + val + '</span></div>';
+}
+
+function submitForm() {
+  var liga = LIGAS[state.liga];
+  var payload = {
+    timestamp: new Date().toISOString(),
+    parGuia: state.parGuia,
+    parIngresante: state.parIngresante,
+    liga: liga.name,
+    reto: state.retoTitulo,
+    fecha: state.fecha,
+    boost: BOOST_LABELS[state.boost]
+  };
+  fetch('https://script.google.com/macros/s/AKfycbwpwFI8qo2A3p35KQ4Ni9Mn3cEfxk1wskQRu3dNn1qpcR7SJdMVh4RI91Ypb0k13f8z/exec', {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  });
+  document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressPct').textContent = '100%';
+  document.getElementById('stepLabel').textContent = '¡Completado!';
+  document.getElementById('successWrap').classList.add('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetForm() {
+  state = { parGuia:'', parIngresante:'', liga:'', retoIdx:null, retoTitulo:'', fecha:'', driveConfirm:false, boost:'' };
+  document.getElementById('parGuia').value = '';
+  document.getElementById('parIngresante').value = '';
+  document.getElementById('fechaReto').value = '';
+  document.querySelectorAll('.liga-card').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('.boost-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById('driveToggle').classList.remove('active');
+  document.getElementById('retosList').innerHTML = '';
+  document.querySelectorAll('.field-error').forEach(el => el.classList.remove('visible'));
+  document.getElementById('successWrap').classList.remove('visible');
+  showStep(1);
+}
+</script>
+</body>
+</html>
